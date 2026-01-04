@@ -6,7 +6,7 @@ Due to Apple's restrictions on iMessages, unfortunately it is quite difficult to
 
 The basic order of operations is
 
-1. Backup your phone (Either through Finder or idevicebackup2)
+1. Backup your phone (Either through Finder or idevicebackup2). (Don't encrypt the backup, use: `idevicebackup2 backup --full /location/of/backup`)
 2. Use executables in this repo to
     * Extract the necessary databases from your backup
     * Parse those databases to create the necessary files
