@@ -1,5 +1,19 @@
 # iMessages Wrapped
 
+This is an application that can be used to get the iMessage information off of your phone and then display a 2025 wrapped for it!
+
+Due to Apple's restrictions on iMessages, unfortunately it is quite difficult to get the information off of your phone and therefore requires a few manual command line steps in order to get it to work fully.
+
+The basic order of operations is
+
+1. Backup your phone (Either through Finder or idevicebackup2)
+2. Use executables in this repo to
+    * Extract the necessary databases from your backup
+    * Parse those databases to create the necessary files
+    * You can at this point manually go in an disable some chats from being used
+    * Generated the final .msgwrp Wrapped file
+3. Open the native Mac application (Compatible for Intel and Apple silicon) to open and display the .msgwrp file
+
 ## Setup
 
 ### Backup phone
@@ -11,7 +25,7 @@ NOTE: you will need to password encrypt your backup. Make sure that you save tha
 
 Create a directory that you will use to store your data. It can be anywhere such as your Desktop for example.
 
-Copy in the three executables (in Backend/dist/) into the directory you just created(iPhoneBackup, MessageParser, MessagesWrapped)
+Copy in the three executables (Not the .dmg files) (in Release 1.0 folder) into the directory you just created(iPhoneBackup, MessageParser, MessagesWrapped)
 
 Then run the following executable:
 
@@ -46,3 +60,9 @@ NOTE: This step takes the longest! It can take from minutes to hours
 ```
 
 This will spit out a file called `wrapped_2025.imsgwrp`. This is the file that will be used in the application to display the data
+
+## Displaying Wrapped Data
+
+Now that you have the `wrapped_2025.imsgwrp` file, you are ready to display it.
+
+In the Release 1.0 folder, there are two DMGs for different types of Macs, choose the one compatible with your mac and open it and install the application. Then open it, select your file, and enjoy!
