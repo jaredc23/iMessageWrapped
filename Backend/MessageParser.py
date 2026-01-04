@@ -577,33 +577,48 @@ def export_messages(SMS_DB_PATH=SMS_DB_PATH, CONTACTS_DB_PATH=CONTACTS_DB_PATH, 
         print(f"Exporting chat {chat_id} ({chat_name})...")
 
         # UPDATED QUERY: Include date_edited, date_retracted, and item_type
-        query_messages = """
-        SELECT
-            m.ROWID,
-            m.guid,
-            m.text,
-            m.attributedBody,
-            m.date,
-            m.is_from_me,
-            h.id AS sender,
-            GROUP_CONCAT(a.filename, '|||') AS attachments,
-            m.associated_message_type,
-            m.associated_message_guid,
-            m.associated_message_emoji,
-            m.thread_originator_guid,
-            m.thread_originator_part,
-            m.date_edited,
-            m.date_retracted,
-            m.item_type
-        FROM chat_message_join cmj
-        JOIN message m ON m.ROWID = cmj.message_id
-        LEFT JOIN handle h ON h.ROWID = m.handle_id
-        LEFT JOIN message_attachment_join maj ON maj.message_id = m.ROWID
-        LEFT JOIN attachment a ON a.ROWID = maj.attachment_id
-        WHERE cmj.chat_id = ?
-        GROUP BY m.ROWID
-        ORDER BY m.date ASC;
-        """
+        # Some iMessage DB schemas do not include the column `associated_message_emoji`.
+        # Detect available columns and build the SELECT dynamically to avoid sqlite errors.
+        cur.execute("PRAGMA table_info(message);")
+        message_columns = [r[1] for r in cur.fetchall()]
+        has_assoc_emoji = 'associated_message_emoji' in message_columns
+
+        select_cols = [
+            'm.ROWID',
+            'm.guid',
+            'm.text',
+            'm.attributedBody',
+            'm.date',
+            'm.is_from_me',
+            'h.id AS sender',
+            "GROUP_CONCAT(a.filename, '|||') AS attachments",
+            'm.associated_message_type',
+            'm.associated_message_guid',
+        ]
+        if has_assoc_emoji:
+            select_cols.append('m.associated_message_emoji')
+        # continue with remaining common columns
+        select_cols += [
+            'm.thread_originator_guid',
+            'm.thread_originator_part',
+            'm.date_edited',
+            'm.date_retracted',
+            'm.item_type'
+        ]
+        select_clause = ",\n            ".join(select_cols)
+
+        query_messages = (
+            "SELECT\n"
+            f"            {select_clause}\n"
+            "        FROM chat_message_join cmj\n"
+            "        JOIN message m ON m.ROWID = cmj.message_id\n"
+            "        LEFT JOIN handle h ON h.ROWID = m.handle_id\n"
+            "        LEFT JOIN message_attachment_join maj ON maj.message_id = m.ROWID\n"
+            "        LEFT JOIN attachment a ON a.ROWID = maj.attachment_id\n"
+            "        WHERE cmj.chat_id = ?\n"
+            "        GROUP BY m.ROWID\n"
+            "        ORDER BY m.date ASC;"
+        )
         cur.execute(query_messages, (chat_id,))
         rows = cur.fetchall()
 
@@ -617,9 +632,27 @@ def export_messages(SMS_DB_PATH=SMS_DB_PATH, CONTACTS_DB_PATH=CONTACTS_DB_PATH, 
         # Process all messages
         all_messages = {}
         for row in rows:
-            (message_id, guid, text, attributed_body, msg_date, is_from_me, sender, attachments_str,
-            assoc_type, assoc_guid, assoc_emoji, thread_orig_guid, thread_orig_part,
-            date_edited, date_retracted, item_type) = row
+            # Unpack row defensively since some DB schemas omit `associated_message_emoji`.
+            idx = 0
+            message_id = row[idx]; idx += 1
+            guid = row[idx]; idx += 1
+            text = row[idx]; idx += 1
+            attributed_body = row[idx]; idx += 1
+            msg_date = row[idx]; idx += 1
+            is_from_me = row[idx]; idx += 1
+            sender = row[idx]; idx += 1
+            attachments_str = row[idx]; idx += 1
+            assoc_type = row[idx]; idx += 1
+            assoc_guid = row[idx]; idx += 1
+            if has_assoc_emoji:
+                assoc_emoji = row[idx]; idx += 1
+            else:
+                assoc_emoji = None
+            thread_orig_guid = row[idx]; idx += 1
+            thread_orig_part = row[idx]; idx += 1
+            date_edited = row[idx]; idx += 1
+            date_retracted = row[idx]; idx += 1
+            item_type = row[idx]; idx += 1
 
             # Skip system/special messages (group changes, name changes, etc.)
             # item_type 0 = regular message, 1+ = system events
