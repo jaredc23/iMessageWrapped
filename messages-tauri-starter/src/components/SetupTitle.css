@@ -1,0 +1,18 @@
+.title-slide h1 {
+  margin: 0;
+}
+
+.get-started {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(37,99,235,0.24);
+}
+
+.get-started:hover {
+  transform: translateY(-1px);
+}
