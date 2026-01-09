@@ -68,3 +68,5 @@ yarn-error.log*
 /data
 *.txt
 *.spec
+
+*aarch64.dmg
